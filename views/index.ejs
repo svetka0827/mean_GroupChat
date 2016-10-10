@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+    <script type="text/javascript">
+    	$(document).ready(function(){
+    		var socket = io.connect();
+    		var current_user;
+
+
+    		var name =prompt("Please enter your name to chat");
+    		// this is the event we want server to listen to page load 
+    		// and we will pass the user name from prompt 
+    		socket.emit("page_load",{user:name});
+
+
+    		socket.on("existing_user", function(data){
+    			$("#error").html(data.error);
+    			var name =prompt("Please enter your name to chat");
+    			socket.emit("page_load",{user:name});
+    			
+    		});
+
+    		socket.on("load_messages", function(data){
+    			$("#error").html("");// so the error message wont show up if name is new
+    			current_user=data.current_user;// setting it up here we know who will send the message
+
+    			// to load all messages:
+    			var messages = data.messages;
+    			var message_thread="";
+
+    			for(var i=0; i< messages.length; i++){
+    				message_thread +="<p>" + messages[i].name + ": " + messages[i].message + "</p>";
+    			}
+
+    			$("#message_board").append(message_thread)
+
+    		});
+
+    		$("#new_message").submit(function(){
+    			socket.emit("new_message", {message: $("#message").val(), user:current_user});
+    			return false;
+    		});
+
+
+    		socket.on("post_new_message", function(data){
+    			$("#message_board").append("<p>"+ data.user + ": " + data.new_message + "</p>");
+    		});
+
+    	});
+    		
+    	
+
+
+    </script>
+</head>
+<body>
+	<div id="container">
+		<div id="error"></div>	
+		<p>Conversation Board</p>
+		<div id="message_board">
+			
+		</div>
+
+		<form id="new_message">
+			<input type="text" name="message" id="message" placeholder="write your message here">
+			<input type="submit" name="sent" id="sent" value="sent">
+		</form>
+
+	</div>
+</body>
+</html>
